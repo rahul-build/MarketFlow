@@ -1,0 +1,13 @@
+docker-workflow
+pipeline-stage-view
+git
+github
+github-branch-source
+credentials
+configuration-as-code
+workflow-aggregator
+pipeline-utility-steps
+blueocean
+nodejs
+ws-cleanup
+ssh-agent

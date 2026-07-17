@@ -1,0 +1,102 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: marketflow-postgres
+
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: marketflow
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Naira@7667
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    networks:
+      - marketflow-network
+
+  backend:
+    image: marketflow-backend:v1
+
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    container_name: marketflow-backend
+
+    restart: unless-stopped
+
+    env_file:
+      - ./backend/.env.docker
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    expose:
+      - "5000"
+
+    networks:
+      - marketflow-network
+
+  frontend:
+    image: marketflow-frontend:v1
+
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+
+    container_name: marketflow-frontend
+
+    restart: unless-stopped
+
+    depends_on:
+      backend:
+        condition: service_started
+
+    expose:
+      - "80"
+
+    networks:
+      - marketflow-network
+
+  nginx:
+    image: marketflow-nginx:v1
+
+    build:
+      context: ./docker/dev/nginx
+      dockerfile: Dockerfile
+
+    container_name: marketflow-nginx
+
+    restart: unless-stopped
+
+    depends_on:
+      frontend:
+        condition: service_started
+
+      backend:
+        condition: service_started
+
+    ports:
+      - "80:80"
+
+    networks:
+      - marketflow-network
+
+volumes:
+  postgres-data:
+
+networks:
+  marketflow-network:
+    driver: bridge
